@@ -1,0 +1,123 @@
+<html>
+  <head>
+    <title>Fixed_Income_YTM_Calculator</title>
+  </head>
+  <h1>Welcome to use Rong's Price and Yield to Maturity calculator!</h1>
+
+  <body>
+    <div class="grid-container">
+      <form name="formcalc">
+        <h2>To calculate the Market Value of a bond</h2>
+        <p>Annual Rate: <input type="text" id="coupon0"></p>
+        <p>Maturity in Years: <input type="text" id="years0"></p>
+        <p>Par Value: <input type="text" id="face0"></p>
+        <p>Rate: <input type="text" id="rate"></p>
+        <input class="button" type="button" value="Calculate" onclick="CalcPrice()">
+        <p>The price of the bond is <input type="text" id="answer0"> .</p>
+        <hr>
+        <h2>To calculate the Yield to Maturity of a bond</h2>
+        <p>Annual Rate: <input type="text" id="coupon"></p>
+        <p>Maturity in Years: <input type="text" id="years"></p>
+        <p>Par Value: <input type="text" id="face"></p>
+        <p>Market Value: <input type="text" id="price"></p>
+        <input class="button" type="button" value="Calculate" onclick="CalcYield()">
+        <p>Yield to Maturity is <input type="text" id="answer"> .</p>
+      </form>
+    </div>
+
+    <script type="text/javascript">
+      function CalcPrice() {
+        var coupon = Number(document.formcalc.coupon0.value);
+        var years = Number(document.formcalc.years0.value);
+        var face = Number(document.formcalc.face0.value);
+        var rate = Number(document.formcalc.rate.value);
+
+        var price = face / Math.pow((1 + rate), years);
+
+    		for (i = 1; i <= years; i++) {
+    			price += (coupon * face) / Math.pow((1 + rate), i);
+    		}
+        document.formcalc.answer0.value=price.toFixed(7);
+      };
+
+      function CalcYield() {
+        var coupon = Number(document.formcalc.coupon.value);
+        var years = Number(document.formcalc.years.value);
+        var face = Number(document.formcalc.face.value);
+        var price = Number(document.formcalc.price.value);
+
+        var approximateYield = ((coupon * face) + (face - price) / years) / ((face + price) /2);
+        var calcPrice;
+        function CurrentPrice(coupon, years,face, ytm) {
+          var currentPrice = face / Math.pow((1 + ytm), years);
+      		for (i = 1; i <= years; i++) {
+      			currentPrice += (coupon * face) / Math.pow((1 + ytm), i);
+      		}
+          return currentPrice;
+        }
+        calcPrice = CurrentPrice(coupon, years,face, approximateYield);
+
+        var diff = calcPrice - price;
+        var lowYield;
+        var highYield;
+
+        if (diff == 0) {
+          return approximateYield.toFixed(7);
+        } else if (diff > 0) { // diff > 0 means calcPrice is too high,
+                             // estimated YTM may be somewhat low
+          lowYield = approximateYield;
+          // below while loop is used to get the high bound of YTM
+          while (diff > 0) {
+            approximateYield += 0.1;
+            calcPrice = CurrentPrice(coupon, years,face, approximateYield);
+            diff = calcPrice - price;
+          }
+          highYield = approximateYield;
+        } else {
+          highYield = approximateYield;
+          //below while loop is used to get the high bound of YTM
+          while (diff < 0) {
+            approximateYield -= 0.1;
+            calcPrice = CalcPrice(coupon, years,face, approximateYield);
+            diff = calcPrice - price;
+          }
+          lowYield = approximateYield;
+        }
+        while (lowYield < highYield) {
+          var mid = (highYield + lowYield) / 2;
+          var calcPrice = CurrentPrice(coupon, years,face, mid);
+          if (Math.abs(calcPrice - price) < 0.0000001) {
+            break;
+          } else if (calcPrice > price) {
+            lowYield = mid;
+          } else {
+            highYield = mid;
+          }
+        }
+        document.formcalc.answer.value=lowYield.toFixed(7);
+      }
+    </script>
+
+    <style>
+      .grid-container {
+        display: grid;
+        background-color: #F5F5DC;
+        padding: 10px;
+      }
+
+      .button {
+        background-color: #4CAF50;
+        border-radius: 6px;
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+      }
+    </style>
+  </body>
+</html>
